@@ -19,7 +19,8 @@ else:
 # ID del grupo de administradores
 ADMIN_GROUP_ID = int(os.getenv("ADMIN_GROUP_ID", "0"))
 
-# API Key para GLPI (obligatorio)
+# Configuración de GLPI
+GLPI_URL = os.getenv("GLPI_URL", "http://your-glpi-server/glpi")
 GLPI_API_KEY = os.getenv("GLPI_API_KEY")
 if not GLPI_API_KEY:
     raise ValueError("❌ GLPI_API_KEY no configurado. Revise su archivo test.env")

@@ -53,7 +53,7 @@ def main():
     app.add_handler(CommandHandler("start", handlers_user.start))
     app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND) & filters.ChatType.PRIVATE, handlers_user.start))
 
-    print("🚀 Sistema SUVE Operativo con Limpieza Automática...")
+    print("🚀 Sistema de Soporte Operativo con Limpieza Automática...")
     app.run_polling(drop_pending_updates=True)
 
 if __name__ == "__main__":

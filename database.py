@@ -28,6 +28,6 @@ class Incidencia(Base):
     group_message_id = Column(Integer)  # ID del mensaje en el grupo de admins
     has_photo = Column(Integer, default=0)  # 1 si el mensaje tiene foto/video
 
-engine = create_engine('sqlite:///soporte_suve.db')
+engine = create_engine('sqlite:///soporte_tecnico.db')
 Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)

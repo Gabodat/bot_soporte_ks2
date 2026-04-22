@@ -49,16 +49,16 @@ async def _enviar_y_guardar(update, context, text, reply_markup=None, chat_id=No
 RE_EMAIL = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
 RE_TELEFONO = r'^0(412|414|424|416|426|222|422)\d{7}$'
 
-# --- HELPER: DETECCIÓN METROBUS ---
-def _es_metrobus(context):
-    """Devuelve True si la ubicación seleccionada pertenece a Metrobus.
-    Revisa el location_path COMPLETO (ej: 'Metrobus CCS > Ruta 001') para detectar
-    cualquier nivel que contenga 'metrobus', no solo el último nivel."""
+# --- HELPER: DETECCIÓN SISTEMA ESPECIAL ---
+def _es_sistema_especial(context):
+    """Devuelve True si la ubicación seleccionada pertenece a un sistema con reglas especiales.
+    Revisa el location_path COMPLETO para detectar cualquier nivel que contenga el término, 
+    no solo el último nivel."""
     path = context.user_data.get("location_path", [])
     ruta_completa = " > ".join(path).lower()
     # Fallback: revisar transport/location también
     fallback = (context.user_data.get("transport", "") or context.user_data.get("location", "")).lower()
-    return "metrobus" in ruta_completa or "metrobus" in fallback
+    return "delta" in ruta_completa or "delta" in fallback
 
 # --- FUNCIONES DE APOYO ---
 async def back_to_equipos_func(update, context):
@@ -84,8 +84,7 @@ def preservar_admin_name(context, clear=True):
 def asignar_ticket_glpi(tid, tecnico_nombre, tecnico_id):
     """Centraliza la lógica de asignación de técnico en GLPI"""
     try:
-        # IP FIXED: 192.168.4.194
-        glpi_assign_url = f"http://192.168.4.194:4444/glpi/tickets/{tid}/assign"
+        glpi_assign_url = f"{config.GLPI_URL}/tickets/{tid}/assign"
         payload = {
             "username": tecnico_nombre.lower(),
             "users_id": tecnico_id,
@@ -99,8 +98,6 @@ def asignar_ticket_glpi(tid, tecnico_nombre, tecnico_id):
         return r.status_code == 200
     except Exception as e:
         logging.error(f"❌ GLPI Assign Error: {e}")
-        return False
-
 def eliminar_tecnico_ticket_glpi(glpi_tid):
     """
     Elimina TODOS los técnicos asignados a un ticket en GLPI.
@@ -112,12 +109,9 @@ def eliminar_tecnico_ticket_glpi(glpi_tid):
     
     # ESTRATEGIA 1: Borrar relación Ticket_User (Actores)
     try:
-        # IP FIXED: 192.168.4.194
-        # Usar endpoint SEARCH genérico porque los nested fallan (404)
         # Usar endpoint SEARCH genérico
-        # IMPORTANTE: NO filtrar por type en la query para evitar problemas de API.
         # Traemos todos los actores y filtramos en Python.
-        url_search = "http://192.168.4.194:4444/glpi/Ticket_User"
+        url_search = f"{config.GLPI_URL}/Ticket_User"
         params = {
             "criteria[0][field]": "tickets_id",
             "criteria[0][searchtype]": "equals",
@@ -139,11 +133,6 @@ def eliminar_tecnico_ticket_glpi(glpi_tid):
             
             count = 0
             for item in items_to_delete:
-                # Filtrar TÉCNICOS (Type 2) en Python
-                # En search responses, los fields vienen como claves numéricas o strings
-                # type suele ser campo 4? O 'type' si forcedisplay no funciona como esperamos.
-                # Vamos a ser defensivos revisando claves
-                
                 actor_type = item.get('type') or item.get(4) or item.get('4')
                 link_id = item.get('id') or item.get(2) or item.get('2')
                 
@@ -152,8 +141,7 @@ def eliminar_tecnico_ticket_glpi(glpi_tid):
                 # Check soft matches for type 2
                 if str(actor_type) == "2":
                     if link_id:
-                        # IP FIXED: 192.168.4.194
-                        url_del = f"http://192.168.4.194:4444/glpi/Ticket_User/{link_id}"
+                        url_del = f"{config.GLPI_URL}/Ticket_User/{link_id}"
                         r_del = requests.delete(url_del, headers={'accept': 'application/json', 'X-API-KEY': config.GLPI_API_KEY}, timeout=5)
                         logging.info(f"GLPI: Eliminando Link {link_id} (Técnico) -> Status {r_del.status_code}")
                         if r_del.status_code in [200, 204]: count += 1
@@ -166,12 +154,10 @@ def eliminar_tecnico_ticket_glpi(glpi_tid):
         logging.error(f"❌ GLPI Error Strategy 1: {e}")
 
     # ESTRATEGIA 2: Actualizar Ticket directo (Legacy/Column update)
-    # Esto limpia la columna 'Asignado a' visualmente en versiones viejas o modos simples
     try:
-        # IP FIXED: 192.168.4.194
         urls = [
-            f"http://192.168.4.194:4444/glpi/tickets/{glpi_tid}", # Custom Proxy convention
-            f"http://192.168.4.194:4444/glpi/Ticket/{glpi_tid}"   # Standard
+            f"{config.GLPI_URL}/tickets/{glpi_tid}", # Custom Proxy convention
+            f"{config.GLPI_URL}/Ticket/{glpi_tid}"   # Standard
         ]
         
         payload = {
@@ -179,8 +165,6 @@ def eliminar_tecnico_ticket_glpi(glpi_tid):
                 "users_id_assign": 0,    # Field standard
                 "_users_id_assign": 0,   # Field alternate
                 "status": 2              # Cambiar a Processing (assign) o New (incoming)? 2=Processing. 
-                                         # Si liberamos, quizás volver a 1 (New)?
-                                         # El usuario pide 'liberar', lo cual implica que nadie lo tiene.
             }
         }
         
@@ -196,6 +180,8 @@ def eliminar_tecnico_ticket_glpi(glpi_tid):
                 
     except Exception as e:
         logging.error(f"❌ GLPI Error Strategy 2: {e}")
+
+    return exitoStrategy 2: {e}")
 
     return exito
 
@@ -263,8 +249,7 @@ def consultar_categoria_glpi(nombre_equipo):
 
 def obtener_categorias_raiz_glpi():
     """Obtiene todas las categorías principales (itilcategories_id == 0)"""
-    # Usamos el endpoint que devuelve todo y filtramos, para consistencia con locations
-    url = "http://192.168.4.194:4444/glpi/categories"
+    url = f"{config.GLPI_URL}/categories"
     try:
         r = requests.get(url, headers={'accept': 'application/json', 'X-API-KEY': config.GLPI_API_KEY}, timeout=5)
         if r.status_code == 200:
@@ -294,7 +279,7 @@ def obtener_categorias_raiz_glpi():
 
 def obtener_subcategorias_glpi(parent_id):
     """Obtiene subcategorías para un ID padre dado (filtros client-side)"""
-    url = f"http://192.168.4.194:4444/glpi/categories"
+    url = f"{config.GLPI_URL}/categories"
     try:
         r = requests.get(url, headers={'accept': 'application/json', 'X-API-KEY': config.GLPI_API_KEY}, timeout=5)
         if r.status_code == 200:
@@ -407,7 +392,7 @@ def obtener_ubicaciones_glpi():
     Endpoint: /locations
     Retorna solo ubicaciones raíz (level 1 o locations_id 0).
     """
-    url = "http://192.168.4.194:4444/locations"
+    url = f"{config.GLPI_URL}/locations"
     try:
         logging.info("GLPI: Consultando ubicaciones...")
         r = requests.get(url, headers={'accept': '*/*', 'X-API-KEY': config.GLPI_API_KEY}, timeout=5)
@@ -429,7 +414,7 @@ def obtener_hijos_ubicacion(parent_id):
     Obtiene sub-ubicaciones (hijas) para un ID de ubicación dado.
     Filtrando localmente la lista completa de ubicaciones.
     """
-    url = "http://192.168.4.194:4444/locations"
+    url = f"{config.GLPI_URL}/locations"
     try:
         logging.info(f"GLPI: Buscando hijas de ubicación {parent_id}...")
         r = requests.get(url, headers={'accept': '*/*', 'X-API-KEY': config.GLPI_API_KEY}, timeout=5)
@@ -496,11 +481,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(msg, parse_mode="HTML", reply_markup=keyboards.kb_start())
         return
 
-    # 3. NO logueado y no se pudo loguear (ej. comando /start o texto inválido sin waiting)
+    # 3. Bienvenida
     context.user_data["waiting_for_login"] = True
-    msg = ("👋 <b>Bienvenido al Centro de Soporte Técnico SUVE</b>\n\n"
+    msg = ("👋 <b>Bienvenido al Centro de Soporte Técnico</b>\n\n"
            "🔒 <b>Autenticación Requerida:</b>\n"
-           "Por favor, escriba su <b>Usuario de Red</b> (GLPI) para continuar:")
+           "Por favor, escriba su <b>Usuario de Red</b> para continuar:")
     await update.message.reply_text(msg, parse_mode="HTML")
 
 async def limpiar_sesiones_antiguas(context: ContextTypes.DEFAULT_TYPE):
@@ -529,7 +514,7 @@ async def reset_data(update, context):
 async def exportar_reporte_csv(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id not in config.ADMIN_IDS: return 
     status_msg = await update.message.reply_text("⏳ <b>Generando informe de gestión...</b>", parse_mode="HTML")
-    filename = f"reporte_suve_{datetime.now().strftime('%Y%m%d_%H%M')}.csv"
+    filename = f"reporte_gestion_{datetime.now().strftime('%Y%m%d_%H%M')}.csv"
     session = Session()
     try:
         tickets = session.query(Incidencia).all()
@@ -539,7 +524,7 @@ async def exportar_reporte_csv(update: Update, context: ContextTypes.DEFAULT_TYP
             for t in tickets:
                 writer.writerow([t.id, t.fecha_reporte, t.usuario_nombre, t.cedula, t.telf, getattr(t, 'email', 'N/A'), t.ubicacion, t.estado, t.tecnico])
         with open(filename, 'rb') as doc:
-            await update.message.reply_document(document=doc, caption=f"📊 <b>Informe SUVE generado correctamente.</b>", parse_mode="HTML")
+            await update.message.reply_document(document=doc, caption=f"📊 <b>Informe de gestión generado correctamente.</b>", parse_mode="HTML")
         await status_msg.delete()
     finally:
         session.close()

@@ -10,15 +10,15 @@ def kb_start():
 
 def kb_sistemas():
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton("🚇 Metro Caracas", callback_data="Caracas"), InlineKeyboardButton("🚄 Metro Los Teques", callback_data="Los Teques")],
-        [InlineKeyboardButton("🚉 IFE Ferrocarril", callback_data="IFE"), InlineKeyboardButton("🚌 Metrobus CCS", callback_data="Metrobus CCS")],
-        [InlineKeyboardButton("🚠 Metro Cable", callback_data="Metro Cable CCS"), InlineKeyboardButton("🏢 Sedes Administrativas", callback_data="Otra sede CCS")],
-        [InlineKeyboardButton("🚌 Metrobus Aragua", callback_data="Metrobus ARA")],
+        [InlineKeyboardButton("🚇 Sistema Alpha", callback_data="Alpha"), InlineKeyboardButton("🚄 Sistema Beta", callback_data="Beta")],
+        [InlineKeyboardButton("🚉 Sistema Gamma", callback_data="Gamma"), InlineKeyboardButton("🚌 Sistema Delta", callback_data="Delta")],
+        [InlineKeyboardButton("🚠 Sistema Epsilon", callback_data="Epsilon"), InlineKeyboardButton("🏢 Sedes Administrativas", callback_data="Admin")],
+        [InlineKeyboardButton("🚌 Sistema Zeta", callback_data="Zeta")],
         [InlineKeyboardButton("👤 Cambiar Usuario", callback_data="change_user")]
     ])
 
-def kb_lineas_caracas():
-    lineas = ["Línea 1", "Línea 2", "Línea 3", "Línea 4", "Línea 5"]
+def kb_lineas_alpha():
+    lineas = ["Línea A", "Línea B", "Línea C", "Línea D", "Línea E"]
     botones = []
     for i in range(0, len(lineas), 2):
         row = [InlineKeyboardButton(f"🔴 {lineas[i]}", callback_data=f"linea_{lineas[i]}")]
@@ -29,78 +29,75 @@ def kb_lineas_caracas():
     return InlineKeyboardMarkup(botones)
 
 def kb_estaciones(sistema, linea=None):
-    # Diccionario de estaciones
+    # Diccionario de sedes/estaciones
     data = {
-        "Caracas": {
-            "Línea 1": [
-                "Propatria", "Pérez Bonalde", "Plaza Sucre", "Gato Negro", "Agua Salud", 
-                "Caño Amarillo", "Capitolio", "La Hoyada", "Parque Carabobo", "Bellas Artes", 
-                "Colegio de Ingenieros", "Plaza Venezuela", "Sabana Grande", "Chacaíto", 
-                "Chacao", "Altamira", "Miranda", "Los Dos Caminos", "Los Cortijos", 
-                "La California", "Petare", "Palo Verde"
+        "Alpha": {
+            "Línea A": [
+                "Sede A1", "Sede A2", "Sede A3", "Sede A4", "Sede A5", 
+                "Sede A6", "Sede A7", "Sede A8", "Sede A9", "Sede A10", 
+                "Sede A11", "Sede A12", "Sede A13", "Sede A14", 
+                "Sede A15", "Sede A16", "Sede A17", "Sede A18", "Sede A19", 
+                "Sede A20", "Sede A21", "Sede A22"
             ],
-            "Línea 2": [
-                "El Silencio", "Capuchinos", "Maternidad", "Artigas", "La Paz", 
-                "La Yaguara", "Carapita", "Antímano", "Mamera", "Ruiz Pineda", 
-                "Las Adjuntas", "Caricuao", "Zoológico"
+            "Línea B": [
+                "Sede B1", "Sede B2", "Sede B3", "Sede B4", "Sede B5", 
+                "Sede B6", "Sede B7", "Sede B8", "Sede B9", "Sede B10", 
+                "Sede B11", "Sede B12", "Sede B13"
             ],
-            "Línea 3": [
-                "Plaza Venezuela", "Ciudad Universitaria", "Los Símbolos", "La Bandera", 
-                "El Valle", "Los Jardines", "Coche", "Mercado", "La Rinconada"
+            "Línea C": [
+                "Sede C1", "Sede C2", "Sede C3", "Sede C4", 
+                "Sede C5", "Sede C6", "Sede C7", "Sede C8", "Sede C9"
             ],
-            "Línea 4": [
-                "Zona Rental", "Parque Central", "Nuevo Circo", "Teatros", "Capuchinos"
+            "Línea D": [
+                "Sede D1", "Sede D2", "Sede D3", "Sede D4", "Sede D5"
             ],
-            "Línea 5": [
-                "Zona Rental", "Bello Monte"
+            "Línea E": [
+                "Sede E1", "Sede E2"
             ]
         },
-        "Los Teques": ["Alí Primera", "Guaicaipuro", "Independencia", "Ayacucho"],
-        "IFE": ["Caracas", "Charallave Norte", "Charallave Sur", "Cúa"],
-        "Metrobus CCS": {
-            "Rutas": ["Ruta 001", "Ruta 002", "Ruta 003", "Ruta 201", "Ruta 202", "Ruta 601"],
+        "Beta": ["Sede B1", "Sede B2", "Sede B3", "Sede B4"],
+        "Gamma": ["Sede G1", "Sede G2", "Sede G3", "Sede G4"],
+        "Delta": {
+            "Rutas": ["Ruta 01", "Ruta 02", "Ruta 03", "Ruta 04", "Ruta 05", "Ruta 06"],
             "Línea 7": [
-                "Las Flores", "Panteón", "Socorro", "La Hoyada", "El Cristo", 
-                "Roca Tarpeya", "Presidente Medina", "El Peaje", "La Bandera", 
-                "Los Ilustres", "Los Símbolos"
+                "Parada 01", "Parada 02", "Parada 03", "Parada 04", "Parada 05", 
+                "Parada 06", "Parada 07", "Parada 08", "Parada 09", 
+                "Parada 10", "Parada 11"
             ]
         },
-        "Metro Cable CCS":{
-            "Parque Central": ["Parque Central 2", "San Agustín"],
-            "Petare": ["Petare 2", "19 de Abril","5 de Julio"],
-            "Palo Verde": ["Palo Verde 2", "Mariche"],
+        "Epsilon":{
+            "Sector A": ["Estación A1", "Estación A2"],
+            "Sector B": ["Estación B1", "Estación B2","Estación B3"],
+            "Sector C": ["Estación C1", "Estación C2"],
         },
-        "Otra sede CCS": ["Viveros"],
-        "Metrobus ARA": ["San Jacinto", "Terminal Maracay", "El Limón","Las Delicias"]
+        "Admin": ["Sede Principal", "Sede Alterna"],
+        "Zeta": ["Zona A", "Zona B", "Zona C","Zona D"]
     }
     
-    if sistema == "Caracas":
-        if not linea: return kb_lineas_caracas()
-        lista = data["Caracas"].get(linea, [])
+    if sistema == "Alpha":
+        if not linea: return kb_lineas_alpha()
+        lista = data["Alpha"].get(linea, [])
         back_data = "back_to_lines"
-    elif sistema == "Metrobus CCS":
-        # Metrobus CCS tiene subopciones: Rutas y Línea 7
+    elif sistema == "Delta":
         if not linea:
-            # Mostrar opciones de Rutas y Línea 7
             botones = [
                 [InlineKeyboardButton("🚇 Línea 7", callback_data="linea_Línea 7")],
                 [InlineKeyboardButton("🚌 Rutas", callback_data="linea_Rutas")],
                 [InlineKeyboardButton("⬅️ Volver", callback_data="back_to_systems")]
             ]
             return InlineKeyboardMarkup(botones)
-        lista = data["Metrobus CCS"].get(linea, [])
+        lista = data["Delta"].get(linea, [])
         back_data = "back_to_lines"
-    elif sistema == "Metro Cable CCS":
-        # Metro Cable CCS tiene subopciones: Parque Central, Petare, Palo Verde
+    elif sistema == "Epsilon":
         if not linea:
             botones = [
-                [InlineKeyboardButton("🚠 Parque Central", callback_data="linea_Parque Central")],
-                [InlineKeyboardButton("🚠 Petare", callback_data="linea_Petare")],
-                [InlineKeyboardButton("🚠 Palo Verde", callback_data="linea_Palo Verde")],
+                [InlineKeyboardButton("🚠 Sector A", callback_data="linea_Sector A")],
+                [InlineKeyboardButton("🚠 Sector B", callback_data="linea_Sector B")],
+                [InlineKeyboardButton("🚠 Sector C", callback_data="linea_Sector C")],
                 [InlineKeyboardButton("⬅️ Volver", callback_data="back_to_systems")]
             ]
             return InlineKeyboardMarkup(botones)
-        lista = data["Metro Cable CCS"].get(linea, [])
+        lista = data["Epsilon"].get(linea, [])
         back_data = "back_to_lines"
     else:
         lista = data.get(sistema, [])
