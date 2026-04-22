@@ -1,0 +1,6 @@
+python-telegram-bot>=20.0
+python-dotenv>=1.0.0
+sqlalchemy>=2.0.0
+certifi>=2023.0.0
+watchdog>=3.0.0
+requests>=2.31.0
